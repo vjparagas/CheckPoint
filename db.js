@@ -45,7 +45,7 @@ db.exec(`
     exam_id INTEGER NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
     started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     ended_at DATETIME,
-    status TEXT DEFAULT 'in_progress' CHECK(status IN ('in_progress', 'completed', 'terminated')),
+    status TEXT DEFAULT 'in_progress',
     score REAL,
     question_order TEXT, -- JSON array of question IDs
     answers TEXT,        -- JSON object { questionId: selectedOption }
