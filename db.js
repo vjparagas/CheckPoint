@@ -52,7 +52,8 @@ db.exec(`
     risk_score INTEGER DEFAULT 0,
     risk_level TEXT DEFAULT 'LOW' CHECK(risk_level IN ('LOW', 'MEDIUM', 'HIGH')),
     reviewed INTEGER DEFAULT 0,
-    review_note TEXT
+    review_note TEXT,
+    appeal TEXT
   );
 
   CREATE TABLE IF NOT EXISTS activity_logs (
@@ -64,9 +65,14 @@ db.exec(`
   );
 `);
 
-// Ensure review_note column exists on attempts table
+// Ensure review_note and appeal columns exist on attempts table
 try {
   db.exec('ALTER TABLE attempts ADD COLUMN review_note TEXT;');
+} catch (e) {
+  // Column already present
+}
+try {
+  db.exec('ALTER TABLE attempts ADD COLUMN appeal TEXT;');
 } catch (e) {
   // Column already present
 }

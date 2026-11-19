@@ -38,6 +38,7 @@ router.get('/attempts', (req, res) => {
       a.risk_level,
       a.reviewed,
       a.review_note,
+      a.appeal,
       COUNT(l.id) AS event_count
     FROM attempts a
     JOIN users u ON a.user_id = u.id
@@ -75,7 +76,8 @@ router.get('/attempts/:id', (req, res) => {
       a.risk_score,
       a.risk_level,
       a.reviewed,
-      a.review_note
+      a.review_note,
+      a.appeal
     FROM attempts a
     JOIN users u ON a.user_id = u.id
     JOIN exams e ON a.exam_id = e.id
@@ -158,6 +160,7 @@ router.get('/export.csv', (req, res) => {
       a.risk_level,
       a.reviewed,
       a.review_note,
+      a.appeal,
       a.started_at,
       a.ended_at,
       COUNT(l.id) AS event_count
@@ -181,6 +184,7 @@ router.get('/export.csv', (req, res) => {
     'Events Count',
     'Reviewed',
     'Review Note',
+    'Student Appeal',
     'Started At',
     'Ended At'
   ];
@@ -197,6 +201,7 @@ router.get('/export.csv', (req, res) => {
     att.event_count,
     att.reviewed ? 'Yes' : 'No',
     escapeCsv(att.review_note || ''),
+    escapeCsv(att.appeal || ''),
     escapeCsv(att.started_at),
     escapeCsv(att.ended_at || '')
   ].join(','));

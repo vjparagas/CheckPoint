@@ -196,6 +196,16 @@
 
       reviewerNoteInput.value = att.review_note || '';
 
+      const appealBox = document.getElementById('panelAppealBox');
+      if (appealBox) {
+        if (att.appeal) {
+          appealBox.style.display = 'block';
+          appealBox.innerHTML = `<strong>Student Appeal / Note:</strong> ${escapeHtml(att.appeal)}`;
+        } else {
+          appealBox.style.display = 'none';
+        }
+      }
+
       // Render timeline events
       if (logs.length === 0) {
         timelineContainer.innerHTML = '<div style="color: #64748b; font-size: 13px;">No behavior events logged for this attempt.</div>';

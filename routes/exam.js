@@ -406,6 +406,33 @@ router.post('/submit', (req, res) => {
   });
 });
 
+/**
+ * POST /api/exam/appeal
+ * Ethical & Privacy Compliance (ARCHITECTURE.md Section 9):
+ * Allows students to submit an appeal or explanation for flagged incidents to be reviewed by the instructor.
+ */
+router.post('/appeal', (req, res) => {
+  const userId = req.user.id;
+  const { attempt_id, appeal } = req.body;
+
+  if (!attempt_id || !appeal) {
+    return res.status(400).json({ error: 'attempt_id and appeal text are required' });
+  }
+
+  const attempt = db.prepare('SELECT * FROM attempts WHERE id = ? AND user_id = ?').get(attempt_id, userId);
+  if (!attempt) {
+    return res.status(404).json({ error: 'Attempt not found' });
+  }
+
+  db.prepare('UPDATE attempts SET appeal = ? WHERE id = ?').run(String(appeal).trim(), attempt.id);
+
+  return res.json({
+    success: true,
+    message: 'Appeal submitted successfully for instructor review',
+    attempt_id: attempt.id
+  });
+});
+
 module.exports = {
   router,
   gradeAndSubmitAttempt
