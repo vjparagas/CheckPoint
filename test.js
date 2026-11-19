@@ -39,7 +39,7 @@ async function run() {
   console.log('Testing CheckPoint Risk Engine, Events, and Anti-Cheating Controls...\n');
 
   // --- 1. Verify WEIGHTS & HIGH_SEVERITY_EVENTS ---
-  console.log('--- 1. Testing Risk Weights Configuration ---');
+  console.log('--- 1. Testing Risk Weights Configuration & Public Assets ---');
   assert.strictEqual(WEIGHTS.TAB_HIDDEN, 10);
   assert.strictEqual(WEIGHTS.WINDOW_BLUR, 5);
   assert.strictEqual(WEIGHTS.FULLSCREEN_EXIT, 10);
@@ -52,7 +52,12 @@ async function run() {
   assert.strictEqual(WEIGHTS.FAST_ANSWER, 3);
   assert.strictEqual(WEIGHTS.SECOND_SESSION, 15);
   assert.strictEqual(WEIGHTS.SIMILAR_ANSWERS, 20);
-  console.log('✓ All 12 event types & weights strictly match ARCHITECTURE.md Section 5');
+
+  const fs = require('fs');
+  for (const file of ['public/login.html', 'public/exam.html', 'public/js/lockdown.js', 'public/js/monitor.js', 'public/js/face.js', 'public/js/exam.js']) {
+    assert(fs.existsSync(file), `Static file ${file} should exist`);
+  }
+  console.log('✓ All 12 event types match ARCHITECTURE.md and all student frontend files (including face.js) exist');
 
   // --- 2. Clean DB and prepare users & exam ---
   db.prepare('DELETE FROM activity_logs').run();

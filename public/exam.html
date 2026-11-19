@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheckPoint - Examination</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Header Navigation */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+    .exam-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .timer-badge {
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      border: 1px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .timer-warning {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fca5a5;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      from { opacity: 0.85; }
+      to { opacity: 1; transform: scale(1.02); }
+    }
+
+    /* Container layout */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 720px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    /* Consent Screen */
+    .view-section {
+      padding: 36px 40px;
+    }
+    .consent-header {
+      margin-bottom: 20px;
+    }
+    .consent-header h2 {
+      font-size: 22px;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .notice-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e40af;
+    }
+    .notice-box ul {
+      margin-left: 20px;
+      margin-top: 8px;
+    }
+    .consent-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 28px;
+      line-height: 1.4;
+    }
+    .consent-checkbox input {
+      margin-top: 3px;
+      cursor: pointer;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-primary:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .btn-danger {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    /* Question Screen */
+    .q-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .q-text {
+      font-size: 19px;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.4;
+      margin-bottom: 24px;
+    }
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .option-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .option-item:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+    .option-item.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+    .option-key {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 14px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .option-item.selected .option-key {
+      background: #2563eb;
+      color: #fff;
+    }
+    .option-text {
+      font-size: 15px;
+      color: #1e293b;
+      line-height: 1.4;
+    }
+    .q-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 20px;
+    }
+    .autosave-status {
+      font-size: 13px;
+      color: #16a34a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Final Screens */
+    .center-view {
+      text-align: center;
+      padding: 48px 36px;
+    }
+    .center-view h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .score-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: #1d4ed8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      margin: 24px auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">CheckPoint</div>
+    <div class="exam-meta">
+      <div id="studentEmail" style="font-size: 14px; color: #475569;"></div>
+      <div id="timerContainer" class="timer-badge" style="display: none;">
+        <span>⏱️</span>
+        <span id="timerText">--:--</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container-card">
+
+      <!-- 1. Consent Screen -->
+      <div id="consentView" class="view-section">
+        <div class="consent-header">
+          <h2>Examination Integrity & Monitoring Consent</h2>
+          <p style="color: #64748b; font-size: 14px;">Please review the security requirements prior to commencing.</p>
+        </div>
+
+        <div class="notice-box">
+          <strong>Notice Regarding Monitoring:</strong>
+          <ul>
+            <li>Your camera and browser interactions will be monitored during the examination.</li>
+            <li><strong>No video is stored:</strong> Snapshot checks are evaluated in-browser for integrity verification only.</li>
+            <li>Full-screen mode is required. Exiting fullscreen or navigating away will be flagged.</li>
+            <li>Copy, paste, cut, developer tools, and right-click menus are restricted.</li>
+            <li>Exceeding allowable security violations will result in automatic exam termination.</li>
+          </ul>
+        </div>
+
+        <label class="consent-checkbox">
+          <input type="checkbox" id="consentCheck">
+          <span>I understand and agree to the exam integrity and monitoring terms. I am ready to enter fullscreen mode.</span>
+        </label>
+
+        <button id="startExamBtn" class="btn btn-primary" style="width: 100%;" disabled>
+          Start Exam (Enter Fullscreen)
+        </button>
+      </div>
+
+      <!-- 2. Active Exam Screen -->
+      <div id="examView" class="view-section" style="display: none;">
+        <div class="q-meta">
+          <span id="questionProgress">Question 1 of 10</span>
+          <span id="examTitle">Sample Exam</span>
+        </div>
+
+        <div id="questionText" class="q-text">Loading question...</div>
+
+        <div id="optionsList" class="options-list"></div>
+
+        <div class="q-footer">
+          <div id="autosaveStatus" class="autosave-status">
+            <span>●</span> Answer autosaved
+          </div>
+          <button id="nextQuestionBtn" class="btn btn-primary" disabled>
+            Next Question →
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Result / Submission Screen -->
+      <div id="resultView" class="center-view" style="display: none;">
+        <h2 style="color: #16a34a;">Exam Submitted Successfully</h2>
+        <p style="color: #64748b; font-size: 15px;">Your responses have been recorded and graded on the server.</p>
+
+        <div id="scoreDisplay" class="score-circle">--%</div>
+        <p id="scoreSummary" style="font-size: 15px; color: #334155; margin-bottom: 28px;"></p>
+
+        <button id="logoutBtn" class="btn btn-primary">Return to Sign In</button>
+      </div>
+
+      <!-- 4. Terminated Screen (Exceeded Violations) -->
+      <div id="terminatedView" class="center-view" style="display: none;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🛑</div>
+        <h2 style="color: #dc2626;">Exam Ended Due to Violations</h2>
+        <p style="color: #475569; font-size: 15px; line-height: 1.6; max-width: 500px; margin: 0 auto 24px;">
+          The system detected repeated security policy violations (such as exiting fullscreen or switching browser tabs).
+          In accordance with the exam guidelines, your attempt was automatically closed and submitted for instructor review.
+        </p>
+        <button id="terminatedLogoutBtn" class="btn btn-danger">Exit to Sign In</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Anti-cheating, behavior, and facial analysis modules (pinned face-api version) -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+  <script src="js/lockdown.js"></script>
+  <script src="js/monitor.js"></script>
+  <script src="js/face.js"></script>
+  <script src="js/exam.js"></script>
+</body>
+</html>

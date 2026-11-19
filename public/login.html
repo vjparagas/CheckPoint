@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheckPoint - Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #f4f6f9;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      width: 100%;
+      max-width: 400px;
+      padding: 32px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px;
+      color: #1a73e8;
+      margin-bottom: 8px;
+    }
+    .header p {
+      font-size: 14px;
+      color: #666;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #444;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #1a73e8;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1557b0;
+    }
+    button:disabled {
+      background: #9fc2f7;
+      cursor: not-allowed;
+    }
+    .error-msg {
+      display: none;
+      background: #fce8e6;
+      color: #c5221f;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      border: 1px solid #fad2cf;
+    }
+    .hint {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #777;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>CheckPoint</h1>
+      <p>Online Exam Integrity System</p>
+    </div>
+
+    <div id="errorBox" class="error-msg"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" required placeholder="e.g. student1@test.com" autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required placeholder="Enter password" autocomplete="current-password">
+      </div>
+
+      <button type="submit" id="submitBtn">Sign In</button>
+    </form>
+
+    <div class="hint">
+      <strong>Demo Credentials:</strong><br>
+      Student: <code>student1@test.com</code> / <code>pass123</code><br>
+      Instructor: <code>instructor@test.com</code> / <code>admin123</code>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorBox = document.getElementById('errorBox');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Login failed. Please check your credentials.');
+        }
+
+        // Store active session token and user info in sessionStorage
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+
+        // Role-based routing
+        if (data.user.role === 'student') {
+          window.location.href = 'exam.html';
+        } else if (data.user.role === 'instructor') {
+          window.location.href = 'admin.html';
+        } else {
+          throw new Error('Unknown user role assigned.');
+        }
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>
