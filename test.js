@@ -4,6 +4,7 @@ const db = require('./db');
 const { router: authRouter, authenticateToken, requireRole } = require('./routes/auth');
 const { router: examRouter } = require('./routes/exam');
 const { router: eventsRouter } = require('./routes/events');
+const { router: adminRouter } = require('./routes/admin');
 const { WEIGHTS, HIGH_SEVERITY_EVENTS, computeRisk, checkSimilarity } = require('./riskEngine');
 
 function createMockRes() {
@@ -18,6 +19,13 @@ function createMockRes() {
     json(payload) {
       this.data = payload;
       return this;
+    },
+    send(payload) {
+      this.data = payload;
+      return this;
+    },
+    setHeader(key, val) {
+      this.headers[key] = val;
     }
   };
 }
@@ -54,10 +62,10 @@ async function run() {
   assert.strictEqual(WEIGHTS.SIMILAR_ANSWERS, 20);
 
   const fs = require('fs');
-  for (const file of ['public/login.html', 'public/exam.html', 'public/js/lockdown.js', 'public/js/monitor.js', 'public/js/face.js', 'public/js/exam.js']) {
+  for (const file of ['public/login.html', 'public/exam.html', 'public/admin.html', 'public/js/lockdown.js', 'public/js/monitor.js', 'public/js/face.js', 'public/js/exam.js', 'public/js/admin.js']) {
     assert(fs.existsSync(file), `Static file ${file} should exist`);
   }
-  console.log('✓ All 12 event types match ARCHITECTURE.md and all student frontend files (including face.js) exist');
+  console.log('✓ All 12 event types match ARCHITECTURE.md and all frontend files (including admin dashboard) exist');
 
   // --- 2. Clean DB and prepare users & exam ---
   db.prepare('DELETE FROM activity_logs').run();
@@ -269,8 +277,62 @@ async function run() {
   assert.strictEqual(s2FinalAttempt.risk_score, 20);
   console.log('✓ Pairwise collusion check detected 3 shared wrong answers; SIMILAR_ANSWERS (weight 20) added to both students');
 
+  // --- 6. Testing Admin Endpoints (Instructor Only) ---
+  console.log('\n--- 6. Testing Admin Endpoints (Instructor Only) ---');
+  const instructor = db.prepare("SELECT * FROM users WHERE email = 'instructor@test.com'").get();
+  const adminReq = { user: instructor };
+
+  const adminAttemptsHandler = getHandler(adminRouter, '/attempts', 'get');
+  const adminAttemptDetailHandler = getHandler(adminRouter, '/attempts/:id', 'get');
+  const adminReviewHandler = getHandler(adminRouter, '/attempts/:id/review', 'post');
+  const adminExportCsvHandler = getHandler(adminRouter, '/export.csv', 'get');
+
+  // 1. GET /api/admin/attempts
+  const attemptsRes = createMockRes();
+  adminAttemptsHandler(adminReq, attemptsRes);
+  assert.strictEqual(attemptsRes.statusCode, 200);
+  assert(Array.isArray(attemptsRes.data), 'Expected array of attempts');
+  assert(attemptsRes.data.length >= 2, 'Should list both student attempts');
+  const att1Summary = attemptsRes.data.find(a => a.id === s1AttemptId);
+  assert(att1Summary, 'Attempt 1 must be present in admin list');
+  assert.strictEqual(att1Summary.student_name, 'Student 1');
+  assert.strictEqual(att1Summary.risk_level, 'LOW');
+  assert(att1Summary.event_count >= 1, 'Should include count of events');
+  console.log(`✓ GET /api/admin/attempts returned ${attemptsRes.data.length} attempts with metrics`);
+
+  // 2. GET /api/admin/attempts/:id
+  const detailRes = createMockRes();
+  adminAttemptDetailHandler({ user: instructor, params: { id: s1AttemptId } }, detailRes);
+  assert.strictEqual(detailRes.statusCode, 200);
+  assert(detailRes.data.attempt, 'Should include attempt details');
+  assert(Array.isArray(detailRes.data.logs), 'Should include activity logs timeline');
+  assert(detailRes.data.logs.some(l => l.event_type === 'SIMILAR_ANSWERS'), 'Timeline should include SIMILAR_ANSWERS');
+  console.log(`✓ GET /api/admin/attempts/:id returned attempt with ${detailRes.data.logs.length} timeline events`);
+
+  // 3. POST /api/admin/attempts/:id/review
+  const reviewRes = createMockRes();
+  adminReviewHandler({ user: instructor, params: { id: s1AttemptId }, body: { note: 'Confirmed collusion on Q1-Q3' } }, reviewRes);
+  assert.strictEqual(reviewRes.statusCode, 200);
+  assert.strictEqual(reviewRes.data.reviewed, 1);
+  assert.strictEqual(reviewRes.data.review_note, 'Confirmed collusion on Q1-Q3');
+
+  const reviewedAtt = db.prepare('SELECT reviewed, review_note FROM attempts WHERE id = ?').get(s1AttemptId);
+  assert.strictEqual(reviewedAtt.reviewed, 1);
+  assert.strictEqual(reviewedAtt.review_note, 'Confirmed collusion on Q1-Q3');
+  console.log('✓ POST /api/admin/attempts/:id/review marked attempt as reviewed and saved note');
+
+  // 4. GET /api/admin/export.csv
+  const csvRes = createMockRes();
+  adminExportCsvHandler(adminReq, csvRes);
+  assert.strictEqual(csvRes.statusCode, 200);
+  assert.strictEqual(csvRes.headers['Content-Type'], 'text/csv; charset=utf-8');
+  assert(typeof csvRes.data === 'string', 'Expected CSV string output');
+  assert(csvRes.data.includes('Attempt ID,Student Name,Student Email'), 'CSV should contain correct headers');
+  assert(csvRes.data.includes('Student 1'), 'CSV should contain Student 1 record');
+  console.log('✓ GET /api/admin/export.csv successfully generated and formatted CSV export');
+
   console.log('\n============================================================');
-  console.log('ALL RISK ENGINE, EVENTS, & COLLUSION TESTS PASSED!');
+  console.log('ALL RISK ENGINE, EVENTS, COLLUSION & ADMIN TESTS PASSED!');
   console.log('============================================================\n');
 }
 

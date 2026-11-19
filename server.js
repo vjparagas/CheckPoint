@@ -4,6 +4,7 @@ require('./db'); // Initialize and seed database schema on startup
 const { router: authRouter } = require('./routes/auth');
 const { router: examRouter } = require('./routes/exam');
 const { router: eventsRouter } = require('./routes/events');
+const { router: adminRouter } = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRouter);
 app.use('/api/exam', examRouter);
 app.use('/api/events', eventsRouter);
+app.use('/api/admin', adminRouter);
 
 // Start server when run directly
 if (require.main === module) {

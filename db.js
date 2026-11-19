@@ -51,7 +51,8 @@ db.exec(`
     answers TEXT,        -- JSON object { questionId: selectedOption }
     risk_score INTEGER DEFAULT 0,
     risk_level TEXT DEFAULT 'LOW' CHECK(risk_level IN ('LOW', 'MEDIUM', 'HIGH')),
-    reviewed INTEGER DEFAULT 0
+    reviewed INTEGER DEFAULT 0,
+    review_note TEXT
   );
 
   CREATE TABLE IF NOT EXISTS activity_logs (
@@ -62,6 +63,13 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+// Ensure review_note column exists on attempts table
+try {
+  db.exec('ALTER TABLE attempts ADD COLUMN review_note TEXT;');
+} catch (e) {
+  // Column already present
+}
 
 // Seed initial users and sample exam if not already present
 function seedData() {
