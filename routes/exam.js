@@ -95,6 +95,10 @@ function gradeAndSubmitAttempt(attemptId) {
     WHERE id = ?
   `).run(score, attemptId);
 
+  // Anti-cheating: Check pairwise answer similarity across all submitted attempts
+  const { checkSimilarity } = require('../riskEngine');
+  checkSimilarity(attempt.exam_id);
+
   return {
     status: 'submitted',
     score,
@@ -344,18 +348,11 @@ router.post('/answer', (req, res) => {
       VALUES (?, 'FAST_ANSWER', ?)
     `).run(attempt.id, eventDetails);
 
-    // Apply risk weight (FAST_ANSWER = 3)
-    const newRiskScore = attempt.risk_score + 3;
-    const newRiskLevel = getRiskLevel(newRiskScore);
-
-    db.prepare(`
-      UPDATE attempts
-      SET risk_score = ?, risk_level = ?
-      WHERE id = ?
-    `).run(newRiskScore, newRiskLevel, attempt.id);
-
-    attempt.risk_score = newRiskScore;
-    attempt.risk_level = newRiskLevel;
+    // Recompute risk score and risk level dynamically
+    const { computeRisk } = require('../riskEngine');
+    const { risk_score, risk_level } = computeRisk(attempt.id);
+    attempt.risk_score = risk_score;
+    attempt.risk_level = risk_level;
   }
 
   // Autosave answer

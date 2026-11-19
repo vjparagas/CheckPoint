@@ -67,6 +67,30 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
+  // Anti-cheating: If student replaces an existing session during an active exam, log SECOND_SESSION
+  if (user.role === 'student' && user.session_token) {
+    const activeAttempt = db.prepare(`
+      SELECT id FROM attempts
+      WHERE user_id = ? AND status = 'in_progress'
+      ORDER BY id DESC LIMIT 1
+    `).get(user.id);
+
+    if (activeAttempt) {
+      const { computeRisk } = require('../riskEngine');
+      const details = JSON.stringify({
+        message: 'Second session login detected during in-progress attempt',
+        timestamp: new Date().toISOString()
+      });
+
+      db.prepare(`
+        INSERT INTO activity_logs (attempt_id, event_type, details)
+        VALUES (?, 'SECOND_SESSION', ?)
+      `).run(activeAttempt.id, details);
+
+      computeRisk(activeAttempt.id);
+    }
+  }
+
   // Generate new random UUID session token
   const sessionToken = uuidv4();
 
